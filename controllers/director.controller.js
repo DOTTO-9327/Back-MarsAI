@@ -126,8 +126,23 @@ const updateDirector = (req, res) => {
   );
 };
 
+const deleteDirector = (req, res) => {
+  const { id } = req.params;
+  Director.deletes(id, (error, results) => {
+    if (error) {
+      console.error('❌ Erreur lors de la requête SQL:', error.message);
+      return res.status(500).send('Erreur serveur');
+    }
+    if (results.affectedRows === 0) {
+      return res.status(404).send('Catégorie non supprimée');
+    }
+    res.status(204).send();
+  });
+};
+
 module.exports = {
   getAllDirector,
   createDirector,
   updateDirector,
+  deleteDirector,
 };

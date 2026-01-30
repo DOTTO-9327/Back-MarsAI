@@ -124,8 +124,14 @@ const update = (
     callback
   );
 };
+
+const deletes = (id, callback) => {
+  const sql = 'DELETE FROM director WHERE id = ?';
+  db.query(sql, [id], callback);
+};
 module.exports = {
   findAll,
   create,
   update,
+  deletes,
 };
