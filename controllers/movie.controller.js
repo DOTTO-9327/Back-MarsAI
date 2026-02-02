@@ -9,6 +9,19 @@ const getAllMovie = (req, res) => {
     res.json(results);
   });
 };
+const getMovieById = (req, res) => {
+  const { id } = req.params;
+ Movie.findById(id, (error, results) => {
+   if (error) {
+     console.error('❌ Erreur lors de la requête SQL:', error.message);
+     return res.status(500).send('Erreur serveur');
+   }
+   if (results.length === 0) {
+     return res.status(404).send('VIDEO non trouvée');
+   }
+   res.json(results[0]);
+ });
+};  
 // --cree un movie
 const createMovie = (req, res) => {
   const {
@@ -73,4 +86,5 @@ const createMovie = (req, res) => {
 module.exports = {
   getAllMovie,
   createMovie,
+  getMovieById
 };

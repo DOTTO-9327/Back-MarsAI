@@ -48,9 +48,13 @@ const create = (
     callback
   );
 };
-
+const findById = (id, callback) => {
+  const sql = "SELECT * FROM movie WHERE id = ?";
+  db.query(sql, [id], callback);
+};
 module.exports = {
   findAll,
   create,
+  findById
 };
 
