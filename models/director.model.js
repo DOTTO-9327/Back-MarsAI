@@ -53,6 +53,17 @@ const create = async director => {
   return { id: result.insertId, ...director };
 };
 
+const findById = async id => {
+  const sql = 'SELECT * FROM director WHERE id = ?';
+
+  // rows contiendra un tableau de résultats
+  const [rows] = await db.query(sql, [id]);
+
+  // On retourne le premier élément du tableau (l'objet director)
+  // ou null si aucun n'est trouvé
+  return rows[0] || null;
+};
+
 const update = (
   firstname,
   lastname,
@@ -101,6 +112,7 @@ const deletes = (id, callback) => {
 module.exports = {
   findAll,
   create,
+  findById,
   update,
   deletes,
 };

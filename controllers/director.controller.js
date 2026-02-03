@@ -29,6 +29,28 @@ const createDirector = async (req, res) => {
   }
 };
 
+
+
+// --affiche un directors par id
+
+const getDirectorById = async (req, res) => {
+  try {
+    const { id } = req.params; // On récupère l'ID passé dans l'URL
+    const director = await Director.findById(id);
+
+    if (!director) {
+      return res.status(404).json({ message: 'Réalisateur non trouvé' });
+    }
+
+    res.json(director);
+  } catch (error) {
+    console.error('❌ Erreur:', error.message);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+};
+
+
+
 // --modifier  un  director
 const updateDirector = (req, res) => {
   const { id } = req.params;
@@ -107,6 +129,7 @@ const deleteDirector = (req, res) => {
 module.exports = {
   getAllDirector,
   createDirector,
+  getDirectorById,
   updateDirector,
   deleteDirector,
 };
