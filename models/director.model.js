@@ -64,45 +64,50 @@ const findById = async id => {
   return rows[0] || null;
 };
 
-const update = (
-  firstname,
-  lastname,
-  email,
-  gender,
-  birthdate,
-  country,
-  city,
-  phone,
-  job,
-  facebook_url,
-  instagram_url,
-  youtube_url,
-  twitter_url,
-  id,
-  callback
-) => {
-  const sql = `UPDATE director SET firstname = ?, lastname = ?, email = ?, gender = ?, birthdate = ?, country = ?, city = ?, phone = ?, job = ?, facebook_url = ?, instagram_url = ?, youtube_url = ?, twitter_url = ? WHERE id = ?`;
+const update = async (id, director) => {
+  const {
+    firstname,
+    lastname,
+    email,
+    gender,
+    birthdate,
+    country,
+    city,
+    phone,
+    job,
+    facebook_url,
+    instagram_url,
+    youtube_url,
+    twitter_url,
+  } = director;
 
-  db.query(
-    sql,
-    [
-      firstname,
-      lastname,
-      email,
-      gender,
-      birthdate,
-      country,
-      city,
-      phone,
-      job,
-      facebook_url,
-      instagram_url,
-      youtube_url,
-      twitter_url,
-      id,
-    ],
-    callback
-  );
+  const sql = `
+    UPDATE director 
+    SET firstname = ?, lastname = ?, email = ?, gender = ?, birthdate = ?, 
+        country = ?, city = ?, phone = ?, job = ?, facebook_url = ?, 
+        instagram_url = ?, youtube_url = ?, twitter_url = ? 
+    WHERE id = ?`;
+
+  // On ajoute bien 'id' à la fin du tableau pour qu'il corresponde au dernier '?'
+  const [result] = await db.query(sql, [
+    firstname,
+    lastname,
+    email,
+    gender,
+    birthdate,
+    country,
+    city,
+    phone,
+    job,
+    facebook_url,
+    instagram_url,
+    youtube_url,
+    twitter_url,
+    id,
+  ]);
+
+  // result.affectedRows permet de savoir si une ligne a bien été modifiée
+  return result.affectedRows > 0;
 };
 
 const deletes = (id, callback) => {
