@@ -1,9 +1,10 @@
 
 const db = require('../config/database');
 
-const findAll = callback => {
+const findAll = async () => {
   const sql = 'SELECT * FROM movie';
-  db.query(sql, callback);
+  const [rows] = await db.query(sql);
+  return rows;
 };
 
 const create = (
