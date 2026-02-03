@@ -1,9 +1,15 @@
 const db = require('../config/database');
 
-const findAll = callback => {
+// Dans votre fichier Model
+const findAll = async () => {
   const sql = 'SELECT * FROM director';
-  db.query(sql, callback);
+  // On attend le résultat de la base de données
+  const [rows] = await db.query(sql);
+  return rows; // On renvoie les données trouvées
 };
+
+
+
 
 const create = (
   firstname,

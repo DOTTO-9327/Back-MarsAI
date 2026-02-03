@@ -1,14 +1,18 @@
 const Director = require('../models/director.model');
 // --recupere toutes les donnee director
-const getAllDirector = (req, res) => {
-  Director.findAll((error, results) => {
-    if (error) {
-      console.error('❌ Erreur lors de la requête SQL:', error.message);
-      return res.status(500).send('Erreur serveur');
-    }
+const getAllDirector = async (req, res) => {
+  try {
+    // On appelle la fonction du model
+    const results = await Director.findAll();
+
+    // On envoie la réponse JSON au client
     res.json(results);
-  });
+  } catch (error) {
+    console.error('❌ Erreur:', error.message);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
 };
+
 // --cree un  director
 const createDirector = (req, res) => {
   const {
