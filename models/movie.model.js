@@ -49,10 +49,13 @@ const create = (
     callback
   );
 };
-const findById = (id, callback) => {
+
+const findById = async (id) => {
   const sql = "SELECT * FROM movie WHERE id = ?";
-  db.query(sql, [id], callback);
+  const [rows] = await db.query(sql, [id]);
+  return [rows]
 };
+
 module.exports = {
   findAll,
   create,
