@@ -8,48 +8,50 @@ const findAll = async () => {
   return rows; // On renvoie les données trouvées
 };
 
+const create = async director => {
+  const {
+    firstname,
+    lastname,
+    email,
+    gender,
+    birthdate,
+    country,
+    city,
+    phone,
+    job,
+    facebook_url,
+    instagram_url,
+    youtube_url,
+    twitter_url,
+  } = director;
 
+  const sql = `
+    INSERT INTO director (
+      firstname, lastname, email, gender, birthdate, 
+      country, city, phone, job, facebook_url, 
+      instagram_url, youtube_url, twitter_url
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
+  // Avec mysql2/promise, on récupère le résultat de l'insertion (souvent appelé 'result')
+  const [result] = await db.query(sql, [
+    firstname,
+    lastname,
+    email,
+    gender,
+    birthdate,
+    country,
+    city,
+    phone,
+    job,
+    facebook_url,
+    instagram_url,
+    youtube_url,
+    twitter_url,
+  ]);
 
-const create = (
-  firstname,
-  lastname,
-  email,
-  gender,
-  birthdate,
-  country,
-  city,
-  phone,
-  job,
-  facebook_url,
-  instagram_url,
-  youtube_url,
-  twitter_url,
-  callback
-) => {
-  const sql =
-    'INSERT INTO director(firstname,lastname,email,gender,birthdate,country,city, phone, job,facebook_url,instagram_url,youtube_url,twitter_url) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)';
-  db.query(
-    sql,
-    [
-      firstname,
-      lastname,
-      email,
-      gender,
-      birthdate,
-      country,
-      city,
-      phone,
-      job,
-      facebook_url,
-      instagram_url,
-      youtube_url,
-      twitter_url,
-    ],
-    callback
-  );
+  // On retourne l'id généré pour pouvoir le renvoyer au client si besoin
+  return { id: result.insertId, ...director };
 };
-
 
 const update = (
   firstname,
