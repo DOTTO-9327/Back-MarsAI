@@ -29,8 +29,6 @@ const createDirector = async (req, res) => {
   }
 };
 
-
-
 // --affiche un directors par id
 
 const getDirectorById = async (req, res) => {
@@ -48,8 +46,6 @@ const getDirectorById = async (req, res) => {
     res.status(500).json({ error: 'Erreur serveur' });
   }
 };
-
-
 
 // --modifier  un  director
 
@@ -74,22 +70,25 @@ const updateDirector = async (req, res) => {
       .json({ error: 'Erreur lors de la mise à jour du réalisateur' });
   }
 };
+// --supprime  un  director
 
 
-const deleteDirector = (req, res) => {
-  const { id } = req.params;
-  Director.deletes(id, (error, results) => {
-    if (error) {
-      console.error('❌ Erreur lors de la requête SQL:', error.message);
-      return res.status(500).send('Erreur serveur');
+const deleteDirector = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const isDeleted = await Director.deletes(id);
+     if (!isDeleted) {
+      return res.status(404).json({ message: 'Réalisateur non trouvé' });
     }
-    if (results.affectedRows === 0) {
-      return res.status(404).send('Réalisateur non supprimé');
-    }
+
     res.status(204).send();
-  });
+  } catch (error) {
+    console.error('❌ Erreur lors de la suppression:', error.message);
+    res
+      .status(500)
+      .json({ error: 'Erreur lors de la suppression du réalisateur' });
+  }
 };
-
 module.exports = {
   getAllDirector,
   createDirector,

@@ -110,10 +110,12 @@ const update = async (id, director) => {
   return result.affectedRows > 0;
 };
 
-const deletes = (id, callback) => {
+const deletes = async id => {
   const sql = 'DELETE FROM director WHERE id = ?';
-  db.query(sql, [id], callback);
+  const [result] = await db.query(sql, [id]);
+  return result.affectedRows > 0;
 };
+
 module.exports = {
   findAll,
   create,
