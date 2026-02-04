@@ -1,4 +1,3 @@
-const { findAll } = require('../models/director.model');
 const Movie = require('../models/movie.model');
 // --recupere toutes les donnee movie
 const getAllMovie = async (req, res) => {
@@ -20,7 +19,7 @@ const getAllMovie = async (req, res) => {
     '
     );
 
-    console.log(results)
+    console.log(results);
 
     if (results.length === 0) {
       return res.status(404).json({
@@ -41,13 +40,12 @@ const getAllMovie = async (req, res) => {
 };
 
 const getMovieById = async (req, res) => {
-  
-  const id = null
+  const { id } = req.params;
 
-  if (!id || id === "null") {
+  if (!id || id === 'null') {
     return res.status(400).json({
       success: false,
-      message: "L'identifiant du film est requis."
+      message: "L'identifiant du film est requis.",
     });
   }
 
@@ -57,14 +55,13 @@ const getMovieById = async (req, res) => {
     if (results === null) {
       return res.status(404).json({
         success: true,
-        message: "Film introuvable"
-      })
-    } 
-      return res.status(200).json({
+        message: 'Film introuvable',
+      });
+    }
+    return res.status(200).json({
       success: true,
       data: results,
     });
-    
   } catch (error) {
     return res.status(500).json({
       success: false,
@@ -74,66 +71,52 @@ const getMovieById = async (req, res) => {
 };
 
 // --cree un movie
-const createMovie = (req, res) => {
-  const {
-    name,
-    original_title,
-    english_title,
-    youtube_url,
-    cover_image,
-    duration,
-    is_hybrid,
-    original_language,
-    original_synopsis,
-    english_synopsis,
-    creative_process,
-    ia_tools,
-    hasSubs,
-    status,
-    director_id,
-  } = req.body;
-  Movie.create(
-    name,
-    original_title,
-    english_title,
-    youtube_url,
-    cover_image,
-    duration,
-    is_hybrid,
-    original_language,
-    original_synopsis,
-    english_synopsis,
-    creative_process,
-    ia_tools,
-    hasSubs,
-    status,
-    director_id,
-    (error, results) => {
-      if (error) {
-        console.error('❌ Erreur lors de la requête SQL:', error.message);
-        return res.status(500).send('Erreur serveur');
-      }
-      res.status(201).json({
-        id: results.insertId,
-        name: name,
-        original_title: original_title,
-        english_title: original_title,
-        youtube_url: youtube_url,
-        cover_image: cover_image,
-        duration: duration,
-        is_hybrid: is_hybrid,
-        original_language: original_language,
-        original_synopsis: original_synopsis,
-        english_synopsis: english_synopsis,
-        creative_process: creative_process,
-        ia_tools: ia_tools,
-        hasSubs: hasSubs,
-        status: status,
-        director_id: director_id,
+const createMovie = async (req, res) => {
+  if (
+    !req.body.original_title ||
+    !req.body.english_title ||
+    !req.body.submitted_at ||
+    !req.body.youtube_url ||
+    !req.body.cover_image ||
+    !req.body.duration ||
+    !req.body.is_hybrid ||
+    !req.body.original_language ||
+    !req.body.original_synopsis ||
+    !req.body.english_synopsis ||
+    !req.body.creative_process ||
+    !req.body.ia_tools ||
+    !req.body.hasSubs ||
+    !req.body.status ||
+    !req.body.director_id
+  ) {
+    return res.status(400).json({
+      success: false,
+      message: `Un ou plusieurs champs sont manquants.`,
+    })
+  }
+
+  try {
+    const results = await Movie.create(req.body);
+
+    if (results.length === 0) {
+      return res.status(404).json({
+        success: true,
+        message: 'Aucune Vidéo trouvée.',
       });
     }
-  );
+
+    return res.status(200).json({
+      success: true,
+      data: results,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: `❌ Erreur lors de la requête SQL: ${error.message}`
+    });
+  }
 };
+
 module.exports = {
   getAllMovie,
   createMovie,
