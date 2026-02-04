@@ -1,7 +1,7 @@
 const mysql = require('mysql2/promise');
 require('dotenv').config();
 
-// On utilise createPool au lieu de createConnection pour de meilleures performances
+
 const db = mysql.createPool({
   host: process.env.DB_HOST,
   port: process.env.DB_PORT,
@@ -13,8 +13,7 @@ const db = mysql.createPool({
   queueLimit: 0,
 });
 
-// Pas besoin de .connect() !
-// On fait juste un petit test rapide pour vérifier si les identifiants sont bons :
+//test de connexion à la db
 db.getConnection()
   .then(() => console.log('✅ Connecté à la base de données MySQL (Pool)'))
   .catch(err => console.error('❌ Erreur de connexion à MySQL :', err.message));
