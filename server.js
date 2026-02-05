@@ -4,12 +4,13 @@ const app = express();
 const MoviesRoutes = require('./routes/movie.routes');
 const DirectorRoutes = require('./routes/director.routes');
 const CollaboratorRoutes = require('./routes/collaborator.routes');
+const SubmissionRoutes = require('./routes/submission.routes');
 
 require('./config/database');
 
 // Middleware pour lire le JSON
 app.use(express.json());
-
+app.use('/submission', SubmissionRoutes);
 app.use('/movie', MoviesRoutes);
 app.use('/director', DirectorRoutes);
 app.use('/collaborator',CollaboratorRoutes);

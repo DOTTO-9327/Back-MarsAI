@@ -6,9 +6,7 @@ const findAll = async () => {
   return rows;
 };
 
-const create = async (movie) => {
- 
-
+const create = async movie => {
   const {
     original_title,
     english_title,
@@ -24,7 +22,7 @@ const create = async (movie) => {
     ia_tools,
     hasSubs,
     status,
-    director_id
+    director_id,
   } = movie;
 
   const sql =
