@@ -7,6 +7,12 @@ const findAll = async () => {
   return rows;
 };
 
+const findByEmail = async email => {
+  const sql = 'SELECT * FROM director WHERE email = ?';
+  const [rows] = await db.query(sql, [email]);
+  return rows[0] || null;
+};
+
 const create = async director => {
   const {
     firstname,
@@ -109,6 +115,7 @@ const deletes = async id => {
 
 module.exports = {
   findAll,
+  findByEmail,
   create,
   findById,
   update,
