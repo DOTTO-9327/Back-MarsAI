@@ -12,7 +12,6 @@ const findById = async id => {
   return rows[0] || null;
 };
 
-// --- Accepte maintenant la connexion transactionnelle ---
 const create = async (movie, connection = null) => {
   const {
     original_title, english_title, submitted_at, youtube_url,

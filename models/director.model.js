@@ -47,8 +47,6 @@ const findById = async id => {
 };
 
 const update = async (id, director) => {
-  // ... (Pas besoin de modif pour la transaction ici, mais garde ton code existant)
-  // Je raccourcis pour la lisibilité, garde ta version update complète ici
   return true; 
 };
 
