@@ -18,51 +18,47 @@ const Director = require('../models/director.model');
 const Movie = require('../models/movie.model');
 const Collaborator = require('../models/collaborator.model');
 
+// Importation future du service YouTube
+// const youtubeService = require('../services/youtube.service');
+
 const submitForm = async (req, res) => {
-  // OBTENIR UNE CONNEXION DU POOL
   const connection = await db.getConnection();
 
   try {
-    // DÉMARRER LA TRANSACTION
     await connection.beginTransaction();
 
     const data = req.body;
-    const file = req.file;
 
-    console.log("Début de la transaction pour :", data.original_title);
+    // Récupération des fichiers
+    const coverFile = req.files && req.files['cover_image'] ? req.files['cover_image'][0] : null;
+    const videoFile = req.files && req.files['video_file'] ? req.files['video_file'][0] : null;
 
-    // --- GESTION DU FICHIER ---
-    // Nettoyage du chemin de l'image pour le stockage en database 
-    let coverPath = null;
-    if (file) {
-      coverPath = file.path.replace(/\\/g, "/");
+    console.log("Début soumission pour :", data.original_title);
+
+    // --- GESTION DES CHEMINS ---
+    const coverPath = coverFile ? coverFile.path.replace(/\\/g, "/") : null;
+    const videoLocalPath = videoFile ? videoFile.path.replace(/\\/g, "/") : null;
+
+    if (!videoLocalPath) {
+      throw new Error("Le fichier vidéo est requis pour la soumission.");
     }
 
-    // --- GESTION RÉALISATEUR (FIND OR CREATE) ---
+    // --- GESTION RÉALISATEUR ---
     // Vérifier si l'email existe déjà pour éviter les doublons dans la table 'director'
     let directorId;
     const existingDirector = await Director.findByEmail(data.email, connection);
 
     if (existingDirector) {
       // Si trouvé, on récupère l'ID existant
-      console.log("Réalisateur trouvé :", existingDirector.email);
       directorId = existingDirector.id;
     } else {
-      console.log("Création d'un nouveau réalisateur...");
       // Sinon, on crée une nouvelle entrée dans 'director'
       const newDirector = await Director.create({
-        firstname: data.firstname,
-        lastname: data.lastname,
-        email: data.email,
-        gender: data.gender,
-        birthdate: data.birthdate,
-        country: data.country,
-        city: data.city,
-        phone: data.phone,
-        job: data.job,
-        facebook_url: data.facebook_url,
-        instagram_url: data.instagram_url,
-        youtube_url: data.youtube_url,
+        firstname: data.firstname, lastname: data.lastname,
+        email: data.email, gender: data.gender, birthdate: data.birthdate,
+        country: data.country, city: data.city, phone: data.phone,
+        job: data.job, facebook_url: data.facebook_url,
+        instagram_url: data.instagram_url, youtube_url: data.youtube_url,
         twitter_url: data.twitter_url
       }, connection);
       directorId = newDirector.id;
@@ -70,23 +66,22 @@ const submitForm = async (req, res) => {
 
     // --- CRÉATION DU FILM ---
     // Conversion des chaînes de caractères "true"/"false" issues du FormData en Booléens/Entiers (0 ou 1)
-    const isHybrid = data.is_hybrid === 'true' || data.is_hybrid === '1';
-    const hasSubs = data.hasSubs === 'true' || data.hasSubs === '1';
-
     const movieData = {
       original_title: data.original_title,
       english_title: data.english_title || data.original_title,
       submitted_at: new Date(),
-      youtube_url: data.youtube_url_movie || data.youtube_url_link,
+      // L'URL YouTube est mise en attente (sera mise à jour par le service plus tard)
+      youtube_url: `PENDING_${Date.now()}`,
       cover_image: coverPath,
+      video_local_path: videoLocalPath,
       duration: parseInt(data.duration, 10) || 0,
-      is_hybrid: isHybrid ? 1 : 0,
+      is_hybrid: (data.is_hybrid === 'true' || data.is_hybrid === '1') ? 1 : 0,
       original_language: data.original_language,
       original_synopsis: data.original_synopsis,
       english_synopsis: data.english_synopsis,
       creative_process: data.creative_process,
       ia_tools: data.ia_tools,
-      hasSubs: hasSubs ? 1 : 0,
+      hasSubs: (data.hasSubs === 'true' || data.hasSubs === '1') ? 1 : 0,
       status: 'PENDING',
       director_id: directorId
     };
@@ -94,38 +89,42 @@ const submitForm = async (req, res) => {
     const createdMovie = await Movie.create(movieData, connection);
     const movieId = createdMovie.id;
 
-    // --- GESTION DE L'ÉQUIPE (COLLABORATEURS) ---
+    // --- GESTION DE L'ÉQUIPE ---
     if (data.team) {
-      let teamMembers = [];
-      try {
-        // Le FormData envoie le tableau team sous forme de String JSON, il faut le parser
-        teamMembers = typeof data.team === 'string' ? JSON.parse(data.team) : data.team;
-        console.log("👥 Membres de l'équipe à insérer :", teamMembers.length);
-      } catch (e) {
-        console.error("Erreur JSON team:", e.message);
-        throw new Error("Format de l'équipe invalide"); 
-      }
-
-      // Boucle asynchrone pour insérer chaque membre un par un dans la table 'collaborator'
+      let teamMembers = typeof data.team === 'string' ? JSON.parse(data.team) : data.team;
       for (const member of teamMembers) {
-        console.log(`Adding member: ${member.firstname} as ${member.role || member.contribution}`);
-
-        await Collaborator.create({
-          firstname: member.firstname,
-          lastname: member.lastname || '',
-          contribution: member.role || member.contribution, 
-          movie_id: movieId
-        }, connection);
+        if (member.firstname) {
+          await Collaborator.create({
+            firstname: member.firstname,
+            lastname: member.lastname || '',
+            contribution: member.role || member.contribution,
+            movie_id: movieId
+          }, connection);
+        }
       }
     }
 
-    // VALIDATION FINALE
+    // VALIDATION DE LA TRANSACTION SQL
     await connection.commit();
-    console.log("Transaction réussie !");
+    console.log("Transaction SQL réussie.");
+
+    // --- APPEL AU SERVICE YOUTUBE (ASYNCHRONE) ---
+    /**
+     * @todo Créer le service YouTube API v3
+     * Cet appel ne doit pas bloquer la réponse HTTP. Upload 
+     * "en arrière-plan".
+     * * youtubeService.uploadVideo({
+     * filePath: videoLocalPath,
+     * title: movieData.original_title,
+     * description: movieData.original_synopsis,
+     * movieId: movieId
+     * });
+     */
+    console.log("Le fichier est prêt pour l'envoi vers YouTube (Service en attente).");
 
     res.status(201).json({
       success: true,
-      message: "Soumission enregistrée avec succès",
+      message: "Soumission enregistrée. La vidéo sera traitée prochainement.",
       movieId
     });
 
@@ -134,16 +133,9 @@ const submitForm = async (req, res) => {
     // Si une seule étape échoue, on annule tout (le réalisateur, le film et l'équipe).
     // La base de données reste dans l'état exact où elle était avant le début.
     if (connection) await connection.rollback();
-    console.error("❌ Erreur de soumission, rollback effectué :", error.message);
-
-    res.status(500).json({
-      success: false,
-      message: "Échec de l'enregistrement",
-      error: error.message
-    });
-
+    console.error("Erreur et Rollback :", error.message);
+    res.status(500).json({ success: false, message: "Erreur lors de l'enregistrement", error: error.message });
   } finally {
-    // LIBÉRATION
     if (connection) connection.release();
   }
 };
