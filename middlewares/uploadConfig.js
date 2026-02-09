@@ -23,10 +23,12 @@ const fileFilter = (req, file, callback) => {
   callback(new Error('Seules les images sont autorisées (jpeg, png)'), false);
 };
 
-module.exports = multer({
+const upload = multer({
   storage,
   fileFilter,
   limits: {
     fileSize: 5 * 1024 * 1024,
   },
-}).single('cover_image');
+});
+
+module.exports = upload;

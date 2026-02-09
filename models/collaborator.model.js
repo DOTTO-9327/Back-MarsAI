@@ -1,6 +1,6 @@
 const db = require('../config/database');
 
-const create = async collaborator => {
+const create = async (collaborator, connection = null) => {
   const { firstname, lastname, contribution, movie_id } = collaborator;
 
   const sql = `
@@ -8,16 +8,21 @@ const create = async collaborator => {
       firstname, lastname, contribution, movie_id
     ) VALUES (?, ?, ?, ?)`;
 
-  const [result] = await db.query(sql, [
-    firstname,
-    lastname,
-    contribution,
-    movie_id,
-  ]);
+  const conn = connection || db;
 
-  return { id: result.insertId, ...collaborator };
+  try {
+    const [result] = await conn.query(sql, [
+      firstname, 
+      lastname || '', 
+      contribution, 
+      movie_id
+    ]);
+
+    return { id: result.insertId, ...collaborator };
+  } catch (error) {
+    console.error("❌ Erreur SQL Collaborator:", error.message);
+    throw error; 
+  }
 };
 
-module.exports = {
-  create,
-};
+module.exports = { create };
