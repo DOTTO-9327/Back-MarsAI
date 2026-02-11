@@ -1,13 +1,13 @@
 require('dotenv').config();
 const express = require('express');
-const path = require('path'); 
+const path = require('path');
 const app = express();
 const cors = require('cors');
 const MoviesRoutes = require('./routes/movie.routes');
 const DirectorRoutes = require('./routes/director.routes');
 const CollaboratorRoutes = require('./routes/collaborator.routes');
 const SubmissionRoutes = require('./routes/submission.routes');
-const AdminRoutes = require('./routes/admin.routes'); 
+const AdminRoutes = require('./routes/admin.routes');
 const frontUrl = process.env.PORT_URL;
 require('./config/database');
 
@@ -19,16 +19,18 @@ app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // --- ROUTES ---
-app.use(cors({
-origin:{frontUrl},
-methods:['get', 'post', 'put', 'delete'],
-allowedHeader:["content-type,Authorization"],
-}))
+app.use(
+  cors({
+    origin: {frontUrl} ,
+    methods: ['get', 'post', 'put', 'delete'],
+    allowedHeader: ['content-type'],
+  })
+);
 app.use('/submission', SubmissionRoutes);
 app.use('/movie', MoviesRoutes);
 app.use('/director', DirectorRoutes);
 app.use('/collaborator', CollaboratorRoutes);
-app.use('/admin', AdminRoutes); 
+app.use('/admin', AdminRoutes);
 
 // Route de test
 app.get('/health', (req, res) => {
