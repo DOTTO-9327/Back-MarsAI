@@ -1,7 +1,15 @@
 const db = require('../config/database');
 
 const findAll = async () => {
-  const sql = 'SELECT * FROM movie';
+  const sql = `
+    SELECT 
+      movie.*, 
+      director.firstname, 
+      director.lastname 
+    FROM movie 
+    LEFT JOIN director ON movie.director_id = director.id
+  `;
+
   const [rows] = await db.query(sql);
   return rows;
 };
