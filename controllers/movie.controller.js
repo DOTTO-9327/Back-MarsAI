@@ -2,24 +2,9 @@ const Movie = require('../models/movie.model');
 // --recupere toutes les donnee movie
 const getAllMovie = async (req, res) => {
   try {
-    const results = await Movie.findAll(
-      'name,original_title,\
-      english_title,\
-      youtube_url,\
-      cover_image,duration,\
-      is_hybrid,\
-      original_language,\
-      original_synopsis,\
-      english_synopsis,\
-      creative_process,\
-      ia_tools,\
-      hasSubs,\
-      status,\
-      director_id\
-    '
-    );
+    const results = await Movie.findAll();
 
-    console.log(results);
+    // console.log(results);
 
     if (results.length === 0) {
       return res.status(404).json({
@@ -92,7 +77,7 @@ const createMovie = async (req, res) => {
     return res.status(400).json({
       success: false,
       message: `Un ou plusieurs champs sont manquants.`,
-    })
+    });
   }
 
   try {
@@ -112,7 +97,7 @@ const createMovie = async (req, res) => {
   } catch (error) {
     return res.status(500).json({
       success: false,
-      message: `❌ Erreur lors de la requête SQL: ${error.message}`
+      message: `❌ Erreur lors de la requête SQL: ${error.message}`,
     });
   }
 };
