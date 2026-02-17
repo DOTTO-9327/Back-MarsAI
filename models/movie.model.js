@@ -15,10 +15,20 @@ const findAll = async () => {
 };
 
 const findById = async id => {
-  const sql = 'SELECT * FROM movie WHERE id = ?';
+  const sql = `
+    SELECT 
+      movie.*, 
+      director.firstname, 
+      director.lastname 
+    FROM movie 
+    INNER JOIN director ON movie.director_id = director.id 
+    WHERE movie.id = ?
+  `;
+
   const [rows] = await db.query(sql, [id]);
   return rows[0] || null;
 };
+
 
 const create = async (movie, connection = null) => {
   const {
