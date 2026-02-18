@@ -1,5 +1,6 @@
 require('dotenv').config();
 const express = require('express');
+const { query } = require('express-validator');
 const path = require('path');
 const app = express();
 const cors = require('cors');
@@ -13,6 +14,11 @@ require('./config/database');
 
 // Middleware pour lire le JSON
 app.use(express.json());
+// --- Oblige à la personne qui existe pour que son champ ne soit pas vide  ---
+app.use(express.json());
+app.get('/hello', query('person').notEmpty(), (req, res) => {
+  res.send(`Hello, ${req.query.person}!`);
+});
 
 // --- ACCÈS AUX FICHIERS (UPLOADS) ---
 // Indispensable pour que l'admin puisse voir les posters et vidéos en local
