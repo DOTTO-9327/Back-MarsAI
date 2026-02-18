@@ -102,8 +102,47 @@ const createMovie = async (req, res) => {
   }
 };
 
+const updateMovieStatus = async (req, res) => {
+  const { id } = req.params;
+  const { status } = req.body;
+
+  // OBJET DE MAPPING : On convertit ce que le front envoie vers ce que la BDD attend
+  const statusMap = {
+    'EN ATTENTE': 'PENDING',
+    'VALIDÉ': 'APPROVED',
+    'REFUSÉ': 'REJECTED',
+    'PENDING': 'PENDING',
+    'APPROVED': 'APPROVED',
+    'REJECTED': 'REJECTED'
+  };
+
+  const dbStatus = statusMap[status?.toUpperCase()];
+
+  if (!dbStatus) {
+    return res.status(400).json({ 
+      success: false, 
+      message: `Statut "${status}" non reconnu.` 
+    });
+  }
+
+  try {
+    const success = await Movie.updateStatus(id, dbStatus);
+    if (!success) {
+      return res.status(404).json({ success: false, message: "Film non trouvé." });
+    }
+    return res.status(200).json({ 
+      success: true, 
+      message: "Statut mis à jour avec succès.",
+      newStatus: dbStatus 
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 module.exports = {
   getAllMovie,
   createMovie,
   getMovieById,
+  updateMovieStatus
 };

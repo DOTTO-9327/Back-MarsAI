@@ -82,4 +82,10 @@ const create = async (movie, connection = null) => {
   return { id: result.insertId, ...movie };
 };
 
-module.exports = { findAll, create, findById };
+const updateStatus = async (id, status) => {
+  const sql = 'UPDATE movie SET status = ? WHERE id = ?';
+  const [result] = await db.query(sql, [status, id]);
+  return result.affectedRows > 0;
+};
+
+module.exports = { findAll, create, findById, updateStatus };
