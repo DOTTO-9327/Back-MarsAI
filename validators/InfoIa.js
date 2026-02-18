@@ -1,29 +1,25 @@
 const { body } = require('express-validator');
+
 const InfoIa = [
-  
-  body('classification')
-  .notEmpty()
-  .isIn(['Génération 100%', 'Production hybride']),
-  
-body("hasSubtitles")
-  .toBoolean()
-  .isBoolean()
-  .custom(value => {
-    if (!value) {
-      throw new Error("Les sous-titres sont obligatoires");
-    }
-    return true;
-  }),
+  // Accepte '0' ou '1' (venant du front-end)
+  body('is_hybrid')
+    .notEmpty().withMessage('Classification requise')
+    .isIn(['0', '1', 0, 1]).withMessage('Format classification invalide'),
 
-    body('outil IA')
-    .trim()
-    .notEmpty().withMessage('Précisez la nature de lIA')
-    .isLength({min: 2, max: 500}),
+  body("hasSubs")
+    .toBoolean()
+    .isBoolean(),
 
-    body('processus créatif')
+  // Noms simplifiés sans espaces
+  body('ia_tools')
     .trim()
-    .notEmpty().withMessage('Décrivez lintéraction humain-machine...')
-    .isLength({min: 5, max: 500}),
-  
+    .notEmpty().withMessage('Précisez les outils IA utilisés')
+    .isLength({ min: 2, max: 500 }),
+
+  body('creative_process')
+    .trim()
+    .notEmpty().withMessage('Décrivez votre processus créatif')
+    .isLength({ min: 5, max: 500 }),
 ];
+
 module.exports = InfoIa;

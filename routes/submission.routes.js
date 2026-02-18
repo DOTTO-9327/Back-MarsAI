@@ -2,15 +2,20 @@ const express = require('express');
 const router = express.Router();
 const submissionController = require('../controllers/submission.controller');
 const upload = require('../middlewares/uploadConfig');
-const createDirectorValidation = require('../validators/director.validator');
+const directorValidation = require('../validators/director.validator');
+const movieValidation = require('../validators/movie.validation');
+const infoIa = require('../validators/InfoIa');
 const { validate } = require('../middlewares/validate');
 
-// Route POST unique avec upload d'image + video
-router.post('/', 
+router.post('/',
   upload.fields([
     { name: 'cover_image', maxCount: 1 },
     { name: 'video_file', maxCount: 1 }
-  ]), createDirectorValidation, movieValidation, InfoIa, validate,
+  ]),
+  directorValidation,
+  movieValidation,
+  infoIa,
+  validate,
   submissionController.submitForm
 );
 
