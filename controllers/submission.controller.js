@@ -64,7 +64,6 @@ const submitForm = async (req, res) => {
       cover_image: coverUrl,
       video_local_path: videoUrl, // URL S3
       duration: parseInt(data.duration, 10),
-      // --- CORRECTION ICI ---
       // On convertit la valeur reçue (0 ou 1) en entier pour la BDD
       is_hybrid: parseInt(data.is_hybrid, 10), 
       original_language: data.original_language,
@@ -111,7 +110,7 @@ const submitForm = async (req, res) => {
     console.error("Erreur Submission:", error.message);
     res.status(500).json({ success: false, error: error.message });
   } finally {
-    // Très important : on libère la connexion pour le pool
+    // Important : on libère la connexion pour le pool
     if (connection) connection.release();
   }
 };
