@@ -19,7 +19,7 @@ const createDirector = async (req, res) => {
 
     if (DirectorVerif) {
       return res.status(200).json({
-        message: 'realisateur exist déjà ',
+        message: 'realisateur existe déjà ',
         director: DirectorVerif,
       });
     }
