@@ -1,10 +1,17 @@
 const db = require('../config/database');
 
 /**
- * Récupère la liste complète des films avec les informations réalisateurs
- * pour l'affichage dans le tableau du dashboard admin.
+ * ============================================================
+ * GESTION DES FILMS
+ * ============================================================
+ */
+
+/**
+ * Récupère la liste complète des films avec les informations réalisateurs.
+ * Utilisé pour le tableau principal du Dashboard Admin.
  */
 const getAdminMovieList = async () => {
+    // Jointure obligatoire entre movie et director pour obtenir l'identité du soumetteur
     const sql = `
     SELECT 
       m.id, 
@@ -26,7 +33,7 @@ const getAdminMovieList = async () => {
 };
 
 /**
- * Met à jour le statut d'un film (Action de modération)
+ * Met à jour le statut d'un film (PENDING, APPROVED, REJECTED).
  */
 const updateMovieStatus = async (id, status) => {
     const [result] = await db.query(
@@ -37,17 +44,26 @@ const updateMovieStatus = async (id, status) => {
 };
 
 /**
- * Crée un nouvel utilisateur et lui assigne un rôle (ADMIN ou JURY)
+ * ============================================================
+ * GESTION DU STAFF (ADMIN & JURY)
+ * ============================================================
+ */
+
+/**
+ * Crée un utilisateur staff et lui lie un rôle via la table role_user.
+ * Le mot de passe doit être hashé avant d'appeler cette fonction.
  */
 const createStaffMember = async (userData) => {
     const { email, password, firstname, lastname, roleName } = userData;
 
+    // Insertion dans la table utilisateur
     const [userResult] = await db.query(
         'INSERT INTO user (mail, password, firstname, lastname) VALUES (?, ?, ?, ?)',
         [email, password, firstname, lastname]
     );
     const userId = userResult.insertId;
 
+    // Récupération de l'ID du rôle à partir de son nom (ADMIN/JURY)
     const [roleRows] = await db.query('SELECT id FROM role WHERE name = ?', [roleName]);
     if (roleRows.length === 0) throw new Error("Rôle inexistant");
     const roleId = roleRows[0].id;
@@ -58,7 +74,7 @@ const createStaffMember = async (userData) => {
 };
 
 /**
- * Récupère tous les utilisateurs avec leur rôle associé
+ * Récupère la liste des membres du staff avec statistiques de visionnage.
  */
 const getStaffList = async () => {
     const sql = `
@@ -67,7 +83,9 @@ const getStaffList = async () => {
       u.firstname, 
       u.lastname, 
       r.name as role,
+      -- Nombre total de films assignés (lignes dans la table rating)
       COUNT(rating.id) as total_assigned,
+      -- Nombre de films déjà notés par le juré
       SUM(CASE WHEN rating.note IS NOT NULL THEN 1 ELSE 0 END) as current_progress
     FROM user u
     JOIN role_user ru ON u.id = ru.user_id
@@ -82,7 +100,13 @@ const getStaffList = async () => {
 };
 
 /**
- * Récupère uniquement les IDs des films avec le statut 'APPROVED'
+ * ============================================================
+ * ALGORITHME DE DISTRIBUTION AUTOMATIQUE
+ * ============================================================
+ */
+
+/**
+ * Filtre les films éligibles au visionnage (uniquement ceux validés par l'admin).
  */
 const getApprovedMovieIds = async () => {
     const [rows] = await db.query("SELECT id FROM movie WHERE status = 'APPROVED'");
@@ -90,7 +114,7 @@ const getApprovedMovieIds = async () => {
 };
 
 /**
- * Récupère uniquement les IDs des utilisateurs ayant le rôle 'JURY'
+ * Récupère uniquement les IDs du staff habilité à noter (rôle JURY).
  */
 const getJuryIds = async () => {
     const [rows] = await db.query(`
@@ -104,23 +128,68 @@ const getJuryIds = async () => {
 };
 
 /**
- * Supprime les assignations en attente (note = NULL) pour faire une distribution propre
+ * Nettoie les anciennes assignations non traitées.
+ * Permet de relancer l'algorithme de distribution sans créer de doublons.
  */
 const clearPendingAssignments = async () => {
     await db.query("DELETE FROM rating WHERE note IS NULL");
 };
 
 /**
- * Insère les assignations en masse dans la table rating
+ * Insertion massive des paires [Juré, Film] dans la table rating.
+ * Utilise la syntaxe optimisée de mysql2 pour les Bulk Inserts.
  */
 const bulkInsertAssignments = async (assignments) => {
     if (assignments.length === 0) return 0;
-    // assignments est un tableau de tableaux : [[user_id, movie_id], [user_id, movie_id], ...]
     const [result] = await db.query(
         "INSERT INTO rating (user_id, movie_id) VALUES ?",
         [assignments]
     );
     return result.affectedRows;
+};
+
+/**
+ * ============================================================
+ * ESPACE JURY : VISIONNAGE ET NOTATION
+ * ============================================================
+ */
+
+/**
+ * Récupère la "Queue" (file d'attente) de films pour un juré spécifique.
+ * Inclut les métadonnées pour le player vidéo et la gestion du statut "noté".
+ */
+const getJuryMovies = async (juryId) => {
+    const sql = `
+        SELECT 
+            m.id as movie_id, 
+            m.original_title as title, 
+            m.cover_image as thumbnail, 
+            m.video_local_path, -- Chemin vers le fichier mp4 sur le serveur
+            m.original_language as country, 
+            YEAR(m.submitted_at) as year,
+            d.firstname, 
+            d.lastname,
+            r.note, -- La note peut être NULL (signifie 'À voir')
+            r.id as rating_id
+        FROM rating r
+        JOIN movie m ON r.movie_id = m.id
+        JOIN director d ON m.director_id = d.id
+        WHERE r.user_id = ?
+    `;
+    const [rows] = await db.query(sql, [juryId]);
+    return rows;
+};
+
+/**
+ * Enregistre ou modifie la note d'un film.
+ * La table 'rating' sert ici de table d'assignation ET de table de résultats.
+ */
+const updateRating = async (ratingId, note) => {
+    const [result] = await db.query(
+        "UPDATE rating SET note = ? WHERE id = ?", 
+        [note, ratingId]
+    );
+    return result.affectedRows > 0;
 };
 
 module.exports = {
@@ -131,5 +200,7 @@ module.exports = {
     getApprovedMovieIds,
     getJuryIds,
     clearPendingAssignments,
-    bulkInsertAssignments
+    bulkInsertAssignments,
+    getJuryMovies,
+    updateRating
 };

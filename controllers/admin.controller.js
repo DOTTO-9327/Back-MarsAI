@@ -1,10 +1,16 @@
+/**
+ * admin.controller.js
+ * -------------------
+ * Contrôleur gérant les logiques métier de l'administration du festival.
+ */
 const Admin = require('../models/admin.model');
 
+/**
+ * Récupère la liste globale des films pour le dashboard
+ */
 const fetchAdminMovies = async (req, res) => {
     try {
         const movies = await Admin.getAdminMovieList();
-
-        // On renvoie un succès même si la liste est vide (tableau vide côté Front)
         res.status(200).json({
             success: true,
             count: movies.length,
@@ -20,11 +26,15 @@ const fetchAdminMovies = async (req, res) => {
     }
 };
 
+/**
+ * Met à jour le statut d'un film (Action de modération).
+ * Attend 'PENDING', 'APPROVED' ou 'REJECTED' dans le body.
+ */
 const moderateMovie = async (req, res) => {
     const { id } = req.params;
     const { status } = req.body;
 
-    // Validation du statut
+    // Validation métier : On bloque toute valeur de statut non prévue par l'ENUM SQL.
     const authorizedStatus = ['PENDING', 'APPROVED', 'REJECTED'];
     if (!authorizedStatus.includes(status)) {
         return res.status(400).json({ success: false, message: "Statut de modération invalide." });
@@ -45,10 +55,13 @@ const moderateMovie = async (req, res) => {
     }
 };
 
+/**
+ * Crée un nouveau membre de l'équipe (Admin ou Jury).
+ * TODO: Implémenter bcrypt.hash pour le password avant l'appel au modèle.
+ */
 const addStaffMember = async (req, res) => {
     try {
         const { email, password, firstname, lastname, role } = req.body;
-        // En production, il faudra hasher le mot de passe ici (ex: bcrypt)
 
         await Admin.createStaffMember({
             email, password, firstname, lastname, roleName: role
@@ -60,6 +73,9 @@ const addStaffMember = async (req, res) => {
     }
 };
 
+/**
+ * Récupère la liste des membres du jury avec leur état d'avancement.
+ */
 const fetchStaff = async (req, res) => {
     try {
         const staff = await Admin.getStaffList();
@@ -69,13 +85,18 @@ const fetchStaff = async (req, res) => {
     }
 };
 
-// Répartition des films pour les jurés
+/**
+ * ALGORITHME DE RÉPARTITION (Workflow "Distribution Automatique")
+ * -------------------------------------------------------------
+ * Logique : Récupère les films validés et les jurés actifs.
+ * Applique une méthode Round Robin pour que chaque film soit évalué par 2 personnes.
+ */
 const distributeMovies = async (req, res) => {
     try {
         const movies = await Admin.getApprovedMovieIds();
         const juries = await Admin.getJuryIds();
 
-        // Vérifications de sécurité
+        // Sécurité : On empêche le calcul si les conditions minimales ne sont pas remplies.
         if (movies.length === 0) {
             return res.status(400).json({ success: false, message: "Aucun film n'est validé (APPROVED)." });
         }
@@ -83,31 +104,29 @@ const distributeMovies = async (req, res) => {
             return res.status(400).json({ success: false, message: "Il faut au moins 2 jurés pour la double évaluation." });
         }
 
-        // Nettoyage des anciennes distributions non notées
+        // Reset : On supprime les assignations précédentes non notées pour éviter les doublons.
         await Admin.clearPendingAssignments();
 
-        // Algorithme de distribution (Round Robin)
         let assignments = [];
         let currentJuryIndex = 0;
 
-        // Pour chaque film, on assigne 2 jurés différents
+        // Boucle de distribution équitable.
         for (let i = 0; i < movies.length; i++) {
             const movieId = movies[i];
 
-            // Premier juré
+            // Assignation Juré A
             const jury1 = juries[currentJuryIndex % juries.length];
             currentJuryIndex++;
 
-            // Deuxième juré (il sera forcément différent car currentJuryIndex a avancé de 1)
+            // Assignation Juré B
             const jury2 = juries[currentJuryIndex % juries.length];
             currentJuryIndex++;
 
-            // On prépare les données pour le Bulk Insert
             assignments.push([jury1, movieId]);
             assignments.push([jury2, movieId]);
         }
 
-        // Insertion en base de données
+        // Insertion groupée (Bulk) pour optimiser les performances BDD.
         const rowsInserted = await Admin.bulkInsertAssignments(assignments);
 
         res.status(200).json({
@@ -121,10 +140,47 @@ const distributeMovies = async (req, res) => {
     }
 };
 
+/**
+ * Récupère la file de visionnage spécifique d'un juré.
+ */
+const fetchJuryMovies = async (req, res) => {
+    const { juryId } = req.params;
+    try {
+        const movies = await Admin.getJuryMovies(juryId);
+        res.status(200).json({ success: true, data: movies });
+    } catch (error) {
+        console.error("Erreur Fetch Jury Movies:", error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+};
+
+/**
+ * Enregistre la note finale donnée par un juré.
+ */
+const saveMovieRating = async (req, res) => {
+    const { ratingId } = req.params;
+    const { note } = req.body;
+    
+    // Validation stricte du barème 0-10 défini dans le Cahier des Charges.
+    if (note < 0 || note > 10) {
+        return res.status(400).json({ success: false, message: "La note doit être comprise entre 0 et 10." });
+    }
+
+    try {
+        await Admin.updateRating(ratingId, note);
+        res.status(200).json({ success: true, message: "Note enregistrée avec succès." });
+    } catch (error) {
+        console.error("Erreur Save Rating:", error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+};
+
 module.exports = {
     fetchAdminMovies,
     moderateMovie,
     addStaffMember,
     fetchStaff,
-    distributeMovies
+    distributeMovies,
+    fetchJuryMovies,
+    saveMovieRating
 };
