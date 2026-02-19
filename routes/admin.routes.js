@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { fetchAdminMovies, moderateMovie, addStaffMember, fetchStaff } = require('../controllers/admin.controller');
+const { fetchAdminMovies, moderateMovie, addStaffMember, fetchStaff, distributeMovies } = require('../controllers/admin.controller');
 
 // GET http://localhost:5000/api/admin/movies
 // Récupère la liste pour le tableau du dashboard
@@ -14,5 +14,7 @@ router.patch('/movies/:id/status', moderateMovie);
 router.post('/staff', addStaffMember);
 
 router.get('/staff', fetchStaff);
+
+router.post('/distribute', distributeMovies);
 
 module.exports = router;
