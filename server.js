@@ -15,7 +15,11 @@ const AdminRoutes = require('./routes/admin.routes');
 require('./config/database');
 
 const app = express();
-const frontUrl = process.env.PORT_URL || 'http://localhost:5174';
+
+// --- GESTION DES CORS MULTIPLES ---
+const allowedOrigins = process.env.ALLOWED_ORIGINS 
+  ? process.env.ALLOWED_ORIGINS.split(',') 
+  : ['http://localhost:5174', 'http://localhost:5173'];
 
 // --- MIDDLEWARES DE BASE ---
 app.use(express.json());
@@ -23,7 +27,18 @@ app.use(express.json());
 // --- CONFIGURATION CORS ---
 app.use(
   cors({
-    origin: frontUrl, 
+    origin: function (origin, callback) {
+      // Autorise les requêtes sans origine (ex: Postman, curl, serveurs)
+      if (!origin) return callback(null, true);
+      
+      // Si l'origine de la requête est dans notre tableau, on l'autorise
+      if (allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        // Sinon, on bloque
+        callback(new Error('Bloqué par la politique CORS de MarsAI'));
+      }
+    },
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'], 
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true
@@ -54,5 +69,5 @@ app.get('/health', (req, res) => {
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);
-  console.log(`🌍 Accepting requests from: ${frontUrl}`);
+  console.log(`🌍 Allowed CORS origins:`, allowedOrigins);
 });
