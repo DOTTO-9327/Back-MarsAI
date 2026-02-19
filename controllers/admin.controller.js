@@ -45,7 +45,33 @@ const moderateMovie = async (req, res) => {
     }
 };
 
+const addStaffMember = async (req, res) => {
+    try {
+        const { email, password, firstname, lastname, role } = req.body;
+        // En production, il faudra hasher le mot de passe ici (ex: bcrypt)
+
+        await Admin.createStaffMember({
+            email, password, firstname, lastname, roleName: role
+        });
+
+        res.status(201).json({ success: true, message: "Membre ajouté avec succès !" });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+const fetchStaff = async (req, res) => {
+    try {
+        const staff = await Admin.getStaffList();
+        res.status(200).json({ success: true, data: staff });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+};
+
 module.exports = {
     fetchAdminMovies,
-    moderateMovie
+    moderateMovie,
+    addStaffMember,
+    fetchStaff
 };
