@@ -69,9 +69,62 @@ const fetchStaff = async (req, res) => {
     }
 };
 
+// Répartition des films pour les jurés
+const distributeMovies = async (req, res) => {
+    try {
+        const movies = await Admin.getApprovedMovieIds();
+        const juries = await Admin.getJuryIds();
+
+        // Vérifications de sécurité
+        if (movies.length === 0) {
+            return res.status(400).json({ success: false, message: "Aucun film n'est validé (APPROVED)." });
+        }
+        if (juries.length < 2) {
+            return res.status(400).json({ success: false, message: "Il faut au moins 2 jurés pour la double évaluation." });
+        }
+
+        // Nettoyage des anciennes distributions non notées
+        await Admin.clearPendingAssignments();
+
+        // Algorithme de distribution (Round Robin)
+        let assignments = [];
+        let currentJuryIndex = 0;
+
+        // Pour chaque film, on assigne 2 jurés différents
+        for (let i = 0; i < movies.length; i++) {
+            const movieId = movies[i];
+
+            // Premier juré
+            const jury1 = juries[currentJuryIndex % juries.length];
+            currentJuryIndex++;
+
+            // Deuxième juré (il sera forcément différent car currentJuryIndex a avancé de 1)
+            const jury2 = juries[currentJuryIndex % juries.length];
+            currentJuryIndex++;
+
+            // On prépare les données pour le Bulk Insert
+            assignments.push([jury1, movieId]);
+            assignments.push([jury2, movieId]);
+        }
+
+        // Insertion en base de données
+        const rowsInserted = await Admin.bulkInsertAssignments(assignments);
+
+        res.status(200).json({
+            success: true,
+            message: `Distribution terminée : ${rowsInserted} assignations créées pour ${movies.length} films.`
+        });
+
+    } catch (error) {
+        console.error("Erreur Distribution:", error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+};
+
 module.exports = {
     fetchAdminMovies,
     moderateMovie,
     addStaffMember,
-    fetchStaff
+    fetchStaff,
+    distributeMovies
 };
