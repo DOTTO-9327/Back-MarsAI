@@ -1,27 +1,40 @@
+/**
+ * collaborator.model.js
+ * ---------------------
+ * Modèle de données pour la gestion des collaborateurs.
+ */
 const db = require('../config/database');
 
-// Récupérer tous les collaborateurs
+/**
+ * Récupère l'intégralité des collaborateurs présents en base de données.
+ */
 const findAll = async () => {
   const sql = 'SELECT * FROM collaborator';
   const [rows] = await db.query(sql);
   return rows;
 };
 
-// Récupérer les collaborateurs d'un film spécifique
+/**
+ * Récupère tous les membres de l'équipe associés à un film spécifique.
+ */
 const findByMovieId = async (movieId) => {
   const sql = 'SELECT * FROM collaborator WHERE movie_id = ?';
   const [rows] = await db.query(sql, [movieId]);
   return rows;
 };
 
-// Récupérer un collaborateur par son ID
+/**
+ * Récupère un collaborateur spécifique par son identifiant unique.
+ */
 const findById = async (id) => {
   const sql = 'SELECT * FROM collaborator WHERE id = ?';
   const [rows] = await db.query(sql, [id]);
   return rows[0] || null;
 };
 
-// Créer un collaborateur
+/**
+ * Crée une nouvelle entrée de collaborateur.
+ */
 const create = async (collaborator, connection = null) => {
   const { firstname, lastname, contribution, movie_id } = collaborator;
 
@@ -30,12 +43,13 @@ const create = async (collaborator, connection = null) => {
       firstname, lastname, contribution, movie_id
     ) VALUES (?, ?, ?, ?)`;
 
+  // Si une connexion de transaction est fournie, on l'utilise, sinon on utilise le pool classique.
   const conn = connection || db;
 
   try {
     const [result] = await conn.query(sql, [
       firstname,
-      lastname || '',
+      lastname || '', // Défaut à chaîne vide si le nom n'est pas renseigné
       contribution,
       movie_id
     ]);
@@ -43,11 +57,13 @@ const create = async (collaborator, connection = null) => {
     return { id: result.insertId, ...collaborator };
   } catch (error) {
     console.error("❌ Erreur SQL Collaborator:", error.message);
-    throw error;
+    throw error; 
   }
 };
 
-// Mettre à jour un collaborateur
+/**
+ * Met à jour les informations d'un collaborateur existant.
+ */
 const update = async (id, collaborator) => {
   const { firstname, lastname, contribution } = collaborator;
   const sql = `
@@ -59,7 +75,9 @@ const update = async (id, collaborator) => {
   return result.affectedRows > 0;
 };
 
-// Supprimer un collaborateur
+/**
+ * Supprime un collaborateur de la base de données.
+ */
 const deletes = async (id) => {
   const sql = 'DELETE FROM collaborator WHERE id = ?';
   const [result] = await db.query(sql, [id]);

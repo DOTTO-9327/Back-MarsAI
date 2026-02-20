@@ -1,5 +1,13 @@
+/**
+ * movie.model.js
+ * --------------
+ * Modèle gérant la persistance des films.
+ */
 const db = require('../config/database');
 
+/**
+ * Récupère l'ensemble des films avec l'identité de leur réalisateur.
+ */
 const findAll = async () => {
   const sql = `
     SELECT 
@@ -14,6 +22,9 @@ const findAll = async () => {
   return rows;
 };
 
+/**
+ * Récupère un film précis et les informations de son auteur via son identifiant.
+ */
 const findById = async id => {
   const sql = `
     SELECT 
@@ -29,7 +40,9 @@ const findById = async id => {
   return rows[0] || null;
 };
 
-
+/**
+ * Création d'un nouveau film.
+ */
 const create = async (movie, connection = null) => {
   const {
     original_title,
@@ -53,12 +66,13 @@ const create = async (movie, connection = null) => {
   const sql = `
     INSERT INTO movie (
       original_title, english_title, submitted_at, youtube_url, 
-      cover_image,video_local_path, duration, is_hybrid, original_language, 
+      cover_image, video_local_path, duration, is_hybrid, original_language, 
       original_synopsis, english_synopsis, creative_process, 
       ia_tools, hasSubs, status, director_id
     ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`;
 
-  const conn = connection || db; // Si pas de transaction, utilise le pool par défaut
+  // Priorité à la connexion de transaction si elle existe
+  const conn = connection || db; 
 
   const [result] = await conn.query(sql, [
     original_title,
@@ -82,6 +96,9 @@ const create = async (movie, connection = null) => {
   return { id: result.insertId, ...movie };
 };
 
+/**
+ * Mise à jour du statut de modération d'un film.
+ */
 const updateStatus = async (id, status) => {
   const sql = 'UPDATE movie SET status = ? WHERE id = ?';
   const [result] = await db.query(sql, [status, id]);
