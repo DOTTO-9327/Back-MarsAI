@@ -54,12 +54,13 @@ const updateMovieStatus = async (id, status) => {
  * Le mot de passe doit être hashé avant d'appeler cette fonction.
  */
 const createStaffMember = async (userData) => {
-    const { email, password, firstname, lastname, roleName } = userData;
+    const { email, password, firstname, lastname, roleName } =
+      userData;
 
     // Insertion dans la table utilisateur
     const [userResult] = await db.query(
-        'INSERT INTO user (mail, password, firstname, lastname) VALUES (?, ?, ?, ?)',
-        [email, password, firstname, lastname]
+      'INSERT INTO user (mail, password, firstname, lastname) VALUES (?, ?, ?, ?)',
+      [email, password, firstname, lastname]
     );
     const userId = userResult.insertId;
 

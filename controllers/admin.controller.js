@@ -4,6 +4,7 @@
  * Contrôleur gérant les logiques métier de l'administration du festival.
  */
 const Admin = require('../models/admin.model');
+const bcrypt = require('bcrypt');
 
 /**
  * Récupère la liste globale des films pour le dashboard
@@ -61,13 +62,23 @@ const moderateMovie = async (req, res) => {
  */
 const addStaffMember = async (req, res) => {
     try {
-        const { email, password, firstname, lastname, role } = req.body;
+      const { email, password, firstname, lastname, role } = req.body;
 
-        await Admin.createStaffMember({
-            email, password, firstname, lastname, roleName: role
-        });
+      //  Hachage du mot de passe
+      const saltRounds = 10;
+      const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-        res.status(201).json({ success: true, message: "Membre ajouté avec succès !" });
+      await Admin.createStaffMember({
+        email,
+        password: hashedPassword,
+        firstname,
+        lastname,
+        roleName: role,
+      });
+
+      res
+        .status(201)
+        .json({ success: true, message: 'Membre ajouté avec succès !' });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
