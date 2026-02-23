@@ -10,7 +10,7 @@ const DirectorRoutes = require('./routes/director.routes');
 const CollaboratorRoutes = require('./routes/collaborator.routes');
 const SubmissionRoutes = require('./routes/submission.routes');
 const AdminRoutes = require('./routes/admin.routes');
-// const authRoutes = require('./routes/auth.routes');
+const authRoutes = require('./routes/auth.routes');
 
 // Connexion BDD
 require('./config/database');
@@ -55,7 +55,7 @@ app.use('/movie', MoviesRoutes);
 app.use('/director', DirectorRoutes);
 app.use('/collaborator', CollaboratorRoutes);
 app.use('/admin', AdminRoutes);
-// app.use('/auth', authRoutes);
+app.use('/auth', authRoutes);
 
 // Route de test validator
 app.get('/hello', query('person').notEmpty(), (req, res) => {

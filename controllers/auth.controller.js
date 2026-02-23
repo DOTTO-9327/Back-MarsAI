@@ -1,59 +1,57 @@
-// const jwt = require('jsonwebtoken');
-// const bcrypt = require('bcrypt');
-// const Admin = require('../models/admin.model');
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcrypt');
+const Admin = require('../models/admin.model');
 
-// const login = (req, res) => {
-//   const { email, password } = req.body;
+const login = async (req, res) => {
+  try {
+    const { mail, password } = req.body;
 
-//   Admin.findByEmail(email, (error, results) => {
-//     if (error) {
-//       console.error('❌ Erreur SQL:', error.message);
-//       return res.status(500).send('Erreur serveur');
-//     }
-//     if (results.length === 0) {
-//       return res.status(401).send('Identifiants invalides');
-//     }
-//     const user = results[0];
+    if (!mail || !password) {
+      return res
+        .status(400)
+        .json({ success: false, message: 'Email et mot de passe requis.' });
+    }
 
-//     const isPasswordValid = bcrypt.compareSync(password, user.password);
-//     if (!isPasswordValid) {
-//       return res.status(401).send('Identifiants invalides');
-//     }
-//     const token = jwt.sign(
-//       { userId: user.id, role: user.role },
-//       process.env.JWT_SECRET,
-//       {
-//         expiresIn: '1h',
-//       }
-//     );
-//     res.json({
-//       token,
-//       user: {
-//         id: user.id,
-//         firstname: user.firstname,
-//         lastname: user.lastname,
-//         email: user.email,
-//         role: user.role,
-//       },
-//     });
-//   });
-// };
+    // On utilise await pour récupérer l'utilisateur
+    const results = await Admin.findByEmail(mail);
 
-// // const register = (req, res) => {
-// //   const { firstname, lastname, email, password } = req.body;
-// //   const hashedPassword = bcrypt.hashSync(password, 10);
-// //   Admin.create(firstname, lastname, email, hashedPassword, (error, result) => {
-// //     if (error) {
-// //       if (error.code === 'ER_DUP_ENTRY') {
-// //         return res.status(409).send('Email déjà utilisé');
-// //       }
-// //       return res.status(500).send('Erreur serveur : ' + error.message);
-// //     }
-// //     res.status(201).json({ id: result.insertId, email });
-// //   });
-// // };
+    if (!results || results.length === 0) {
+      return res
+        .status(401)
+        .json({ success: false, message: 'Identifiants invalides' });
+    }
 
-// module.exports = {
-// //   register,
-//   login,
-// };
+    const user = results[0];
+
+    // Comparaison du mot de passe saisi avec le hash en BDD
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+
+    if (!isPasswordValid) {
+      return res
+        .status(401)
+        .json({ success: false, message: 'Identifiants invalides' });
+    }
+
+    // Génération du Token JWT
+    const token = jwt.sign(
+      { userId: user.id, role: user.role },
+      process.env.JWT_SECRET || 'votre_cle_de_secours', // Sécurité si le .env est mal lu
+      { expiresIn: '1h' }
+    );
+
+    res.json({
+      success: true,
+      token,
+      user: {
+        id: user.id,
+        mail: user.mail, // Attention : vérifiez si votre colonne est 'mail' ou 'email'
+        role: user.role,
+      },
+    });
+  } catch (error) {
+    console.error('❌ Erreur Login:', error.message);
+    res.status(500).json({ success: false, message: 'Erreur serveur' });
+  }
+};
+
+module.exports = { login };

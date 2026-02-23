@@ -62,14 +62,14 @@ const moderateMovie = async (req, res) => {
  */
 const addStaffMember = async (req, res) => {
     try {
-      const { email, password, firstname, lastname, role } = req.body;
+      const { mail, password, firstname, lastname, role } = req.body;
 
       //  Hachage du mot de passe
       const saltRounds = 10;
       const hashedPassword = await bcrypt.hash(password, saltRounds);
 
       await Admin.createStaffMember({
-        email,
+        mail,
         password: hashedPassword,
         firstname,
         lastname,
