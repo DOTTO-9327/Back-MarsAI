@@ -49,17 +49,30 @@ const updateMovieStatus = async (id, status) => {
  * ============================================================
  */
 
+// user par son mail
+const findByEmail = async mail => {
+  const sql = `
+    SELECT u.*, r.name AS role 
+    FROM user u
+    LEFT JOIN role_user ru ON u.id = ru.user_id
+    LEFT JOIN role r ON ru.role_id = r.id
+    WHERE u.mail = ?`;
+
+  const [rows] = await db.query(sql, [mail]);
+  return rows; 
+};
 /**
  * Crée un utilisateur staff et lui lie un rôle via la table role_user.
  * Le mot de passe doit être hashé avant d'appeler cette fonction.
  */
 const createStaffMember = async (userData) => {
-    const { email, password, firstname, lastname, roleName } = userData;
+    const { mail, password, firstname, lastname, roleName } =
+      userData;
 
     // Insertion dans la table utilisateur
     const [userResult] = await db.query(
-        'INSERT INTO user (mail, password, firstname, lastname) VALUES (?, ?, ?, ?)',
-        [email, password, firstname, lastname]
+      'INSERT INTO user (mail, password, firstname, lastname) VALUES (?, ?, ?, ?)',
+      [mail, password, firstname, lastname]
     );
     const userId = userResult.insertId;
 
@@ -202,5 +215,6 @@ module.exports = {
     clearPendingAssignments,
     bulkInsertAssignments,
     getJuryMovies,
+    findByEmail,
     updateRating
 };

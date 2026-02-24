@@ -10,6 +10,7 @@ const DirectorRoutes = require('./routes/director.routes');
 const CollaboratorRoutes = require('./routes/collaborator.routes');
 const SubmissionRoutes = require('./routes/submission.routes');
 const AdminRoutes = require('./routes/admin.routes');
+const authRoutes = require('./routes/auth.routes');
 
 // Connexion BDD
 require('./config/database');
@@ -17,8 +18,8 @@ require('./config/database');
 const app = express();
 
 // --- GESTION DES CORS MULTIPLES ---
-const allowedOrigins = process.env.ALLOWED_ORIGINS 
-  ? process.env.ALLOWED_ORIGINS.split(',') 
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(',')
   : ['http://localhost:5174', 'http://localhost:5173'];
 
 // --- MIDDLEWARES DE BASE ---
@@ -30,7 +31,7 @@ app.use(
     origin: function (origin, callback) {
       // Autorise les requêtes sans origine (ex: Postman, curl, serveurs)
       if (!origin) return callback(null, true);
-      
+
       // Si l'origine de la requête est dans notre tableau, on l'autorise
       if (allowedOrigins.includes(origin)) {
         callback(null, true);
@@ -39,9 +40,9 @@ app.use(
         callback(new Error('Bloqué par la politique CORS de MarsAI'));
       }
     },
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'], 
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
-    credentials: true
+    credentials: true,
   })
 );
 
@@ -54,6 +55,7 @@ app.use('/movie', MoviesRoutes);
 app.use('/director', DirectorRoutes);
 app.use('/collaborator', CollaboratorRoutes);
 app.use('/admin', AdminRoutes);
+app.use('/auth', authRoutes);
 
 // Route de test validator
 app.get('/hello', query('person').notEmpty(), (req, res) => {
