@@ -194,13 +194,12 @@ const getJuryMovies = async (juryId) => {
 };
 
 /**
- * Enregistre ou modifie la note d'un film.
- * La table 'rating' sert ici de table d'assignation ET de table de résultats.
+ * Enregistre ou modifie la note et le commentaire d'un film.
  */
-const updateRating = async (ratingId, note) => {
+const updateRating = async (ratingId, note, comment = null) => {
     const [result] = await db.query(
-        "UPDATE rating SET note = ? WHERE id = ?", 
-        [note, ratingId]
+        "UPDATE rating SET note = ?, comment = ? WHERE id = ?", 
+        [note, comment, ratingId]
     );
     return result.affectedRows > 0;
 };
