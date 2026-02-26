@@ -62,23 +62,23 @@ const moderateMovie = async (req, res) => {
  */
 const addStaffMember = async (req, res) => {
     try {
-      const { mail, password, firstname, lastname, role } = req.body;
+        const { mail, password, firstname, lastname, role } = req.body;
 
-      //  Hachage du mot de passe
-      const saltRounds = 10;
-      const hashedPassword = await bcrypt.hash(password, saltRounds);
+        //  Hachage du mot de passe
+        const saltRounds = 10;
+        const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-      await Admin.createStaffMember({
-        mail,
-        password: hashedPassword,
-        firstname,
-        lastname,
-        roleName: role,
-      });
+        await Admin.createStaffMember({
+            mail,
+            password: hashedPassword,
+            firstname,
+            lastname,
+            roleName: role,
+        });
 
-      res
-        .status(201)
-        .json({ success: true, message: 'Membre ajouté avec succès !' });
+        res
+            .status(201)
+            .json({ success: true, message: 'Membre ajouté avec succès !' });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
@@ -166,20 +166,25 @@ const fetchJuryMovies = async (req, res) => {
 };
 
 /**
- * Enregistre la note finale donnée par un juré.
+ * Enregistre la note finale et le commentaire donnés par un juré.
  */
 const saveMovieRating = async (req, res) => {
     const { ratingId } = req.params;
-    const { note } = req.body;
-    
-    // Validation stricte du barème 0-10 défini dans le Cahier des Charges.
+    const { note, comment } = req.body; // <-- Récupération du commentaire
+
+    // Validation stricte du barème 0-10
     if (note < 0 || note > 10) {
         return res.status(400).json({ success: false, message: "La note doit être comprise entre 0 et 10." });
     }
 
     try {
-        await Admin.updateRating(ratingId, note);
-        res.status(200).json({ success: true, message: "Note enregistrée avec succès." });
+        // Envoi de la note et du commentaire au modèle
+        await Admin.updateRating(ratingId, note, comment);
+
+        res.status(200).json({
+            success: true,
+            message: "Note et commentaire enregistrés avec succès."
+        });
     } catch (error) {
         console.error("Erreur Save Rating:", error);
         res.status(500).json({ success: false, error: error.message });
