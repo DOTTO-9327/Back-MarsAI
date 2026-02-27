@@ -11,7 +11,7 @@ const CollaboratorRoutes = require('./routes/collaborator.routes');
 const SubmissionRoutes = require('./routes/submission.routes');
 const AdminRoutes = require('./routes/admin.routes');
 const authRoutes = require('./routes/auth.routes');
-
+const emailRoutes = require('./routes/email.routes');
 // Connexion BDD
 require('./config/database');
 
@@ -36,7 +36,7 @@ app.use(
       if (allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
-        // Sinon, on bloque
+   
         callback(new Error('Bloqué par la politique CORS de MarsAI'));
       }
     },
@@ -56,7 +56,8 @@ app.use('/director', DirectorRoutes);
 app.use('/collaborator', CollaboratorRoutes);
 app.use('/admin', AdminRoutes);
 app.use('/auth', authRoutes);
-
+// --- ROUTES email ---
+app.use('/emails', emailRoutes);
 // Route de test validator
 app.get('/hello', query('person').notEmpty(), (req, res) => {
   res.send(`Hello, ${req.query.person}!`);

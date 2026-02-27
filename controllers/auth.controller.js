@@ -12,7 +12,7 @@ const login = async (req, res) => {
         .json({ success: false, message: 'Email et mot de passe requis.' });
     }
 
-    // On utilise await pour récupérer l'utilisateur
+    // On  récupére l'utilisateur
     const results = await Admin.findByEmail(mail);
 
     if (!results || results.length === 0) {
@@ -35,7 +35,7 @@ const login = async (req, res) => {
     // Génération du Token JWT
     const token = jwt.sign(
       { userId: user.id, role: user.role },
-      process.env.JWT_SECRET || 'votre_cle_de_secours', // Sécurité si le .env est mal lu
+      process.env.JWT_SECRET || 'votre_cle_de_secours', 
       { expiresIn: '1h' }
     );
 
@@ -44,7 +44,7 @@ const login = async (req, res) => {
       token,
       user: {
         id: user.id,
-        mail: user.mail, // Attention : vérifiez si votre colonne est 'mail' ou 'email'
+        mail: user.mail, 
         role: user.role,
       },
     });
