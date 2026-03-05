@@ -2,15 +2,18 @@
  * movie.controller.js
  */
 const Movie = require('../models/movie.model');
-const Notification = require('../models/notification.model'); // Import du modèle notification
-
+const Notification = require('../models/notification.model'); 
+const { getPagination } = require('../services/pagination.service');
 const getAllMovie = async (req, res) => {
   try {
-    const results = await Movie.findAll();
+    const page = parseInt(req.query.page) || 1;
+    const limit = 20; 
+    const offset = (page - 1) * limit;
+    const results = await Movie.findAll(limit, offset);
     if (results.length === 0) {
       return res.status(404).json({ success: true, message: 'Aucune Vidéo trouvée.' });
     }
-    return res.status(200).json({ success: true, data: results });
+      return res.status(200).json(getPagination(results, page, limit));
   } catch (error) {
     console.error(`❌ Erreur SQL getAllMovie: ${error.message}`);
     return res.status(500).json({ success: false, message: `Erreur lors de la récupération des films.` });

@@ -2,10 +2,10 @@ const emailService = require('../services/email.service');
 
 const sendSimpleEmail = async (req, res) => {
   try {
-    const { to, subject, text } = req.body;
+    const { to, subject, text ,html} = req.body;
 
     
-    await emailService.sendEmail({ to, subject, text });
+    await emailService.sendEmail({ to, subject, text ,html});
 
     res.status(200).json({ message: 'Email envoyé avec succès' });
   } catch (error) {
