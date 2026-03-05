@@ -8,7 +8,7 @@ const db = require('../config/database');
 /**
  * Récupère l'ensemble des films avec l'identité de leur réalisateur.
  */
-const findAll = async () => {
+const findAll = async (limit, offset) => {
   const sql = `
     SELECT 
       movie.*, 
@@ -16,9 +16,10 @@ const findAll = async () => {
       director.lastname 
     FROM movie 
     LEFT JOIN director ON movie.director_id = director.id
+    LIMIT ? OFFSET ?
   `;
 
-  const [rows] = await db.query(sql);
+  const [rows] = await db.query(sql, [limit, offset]);
   return rows;
 };
 
