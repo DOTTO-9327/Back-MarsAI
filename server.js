@@ -9,9 +9,10 @@ const MoviesRoutes = require('./routes/movie.routes');
 const DirectorRoutes = require('./routes/director.routes');
 const CollaboratorRoutes = require('./routes/collaborator.routes');
 const SubmissionRoutes = require('./routes/submission.routes');
+const EventRoutes = require('./routes/event.routes'); // Import des routes d'événements
 const AdminRoutes = require('./routes/admin.routes');
 const authRoutes = require('./routes/auth.routes');
-const emailRoutes = require('./routes/email.routes');
+
 // Connexion BDD
 require('./config/database');
 
@@ -36,7 +37,7 @@ app.use(
       if (allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
-   
+        // Sinon, on bloque
         callback(new Error('Bloqué par la politique CORS de MarsAI'));
       }
     },
@@ -54,10 +55,10 @@ app.use('/submission', SubmissionRoutes);
 app.use('/movie', MoviesRoutes);
 app.use('/director', DirectorRoutes);
 app.use('/collaborator', CollaboratorRoutes);
+app.use('/event', EventRoutes); // Utilisation des routes d'événements
 app.use('/admin', AdminRoutes);
 app.use('/auth', authRoutes);
-// --- ROUTES email ---
-app.use('/emails', emailRoutes);
+
 // Route de test validator
 app.get('/hello', query('person').notEmpty(), (req, res) => {
   res.send(`Hello, ${req.query.person}!`);
