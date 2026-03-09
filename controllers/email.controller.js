@@ -15,6 +15,7 @@ const sendSimpleEmail = async (req, res) => {
   }
 };
 const postConfirmation = async (req, res) => {
+  
   try {
     const { email, firstname, filmTitle } = req.body;
 
