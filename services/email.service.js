@@ -1,4 +1,4 @@
-const { mailjet } = require('../config/mailjet.js');
+const mailjet  = require('../config/mailjet.js');
 
 const sendEmail = async ({ to, subject, text, html }) => {
   return mailjet.post('send', { version: 'v3.1' }).request({
@@ -28,14 +28,13 @@ const sendConfirmationEmail = async ({ email, firstname, filmTitle }) => {
         },
         To: [{ Email: email, Name: firstname }],
         Subject: `Confirmation : ${filmTitle}`,
-        HTMLPart: `
-                        <div style="font-family: Arial, sans-serif; line-height: 1.6;">
-                            <h2>Bonjour ${firstname},</h2>
-                            <p>Nous confirmons la réception de votre dossier pour le film : <strong>${filmTitle}</strong>.</p>
-                            <p>Notre équipe va l'étudier avec attention.</p>
-                            <p>Cordialement,<br>L'équipe du Festival.</p>
-                        </div>
-                    `,
+        TemplateID: 7763577,
+        TemplateLanguage: true,
+        Variables: {
+          "firstname": firstname,
+          "filmTitle": filmTitle,
+        },
+      
       },
     ],
   });

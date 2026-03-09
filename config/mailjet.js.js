@@ -5,4 +5,4 @@ const mailjet = Mailjet.apiConnect(
   process.env.MAILJET_SECRET_KEY
 );
 
-module.exports = { mailjet };
+module.exports =  mailjet ;
